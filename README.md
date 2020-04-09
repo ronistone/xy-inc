@@ -14,7 +14,7 @@ Backend as a service
  que seriam: schema, atributos do schema, objetos e atributos do objeto.
  Isto no forçaria a fazer vários join para se fazer consultas o que poderia prejudicar a performance
  
- - Toda a definição do schema é dinâmica bastando que o tipo que se 
+ - Toda a definição de tipos do schema é dinâmica bastando que o tipo que se 
  deseja utilizar esteja no enum `AttributesTypes` que define o nome que 
  deve vir no payload e o tipo que ele representa
  

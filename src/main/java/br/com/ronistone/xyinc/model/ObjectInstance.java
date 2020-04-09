@@ -3,15 +3,13 @@ package br.com.ronistone.xyinc.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Map;
-
 @Document
 public class ObjectInstance {
 
     @Id
     private String id;
     private String schema;
-    private Map<String,Object> attributes;
+    private Attributes attributes;
 
     public String getId() {
         return id;
@@ -29,11 +27,11 @@ public class ObjectInstance {
         this.schema = schema;
     }
 
-    public Map<String, Object> getAttributes() {
+    public Attributes getAttributes() {
         return attributes;
     }
 
-    public void setAttributes(Map<String, Object> attributes) {
+    public void setAttributes(Attributes attributes) {
         this.attributes = attributes;
     }
 }

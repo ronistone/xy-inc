@@ -1,17 +1,20 @@
 package br.com.ronistone.xyinc.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Map;
 
 @Document
 public class Schema {
 
     @Id
     private String id;
+
+    @Indexed(unique = true)
     private String name;
-    private Map<String,String > attributes;
+
+    private Attributes attributes;
 
     public String getId() {
         return id;
@@ -29,11 +32,11 @@ public class Schema {
         this.name = name;
     }
 
-    public Map<String, String> getAttributes() {
+    public Attributes getAttributes() {
         return attributes;
     }
 
-    public void setAttributes(Map<String, String> attributes) {
+    public void setAttributes(Attributes attributes) {
         this.attributes = attributes;
     }
 }

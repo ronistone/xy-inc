@@ -1,6 +1,7 @@
 package br.com.ronistone.xyinc.service.impl;
 
-import br.com.ronistone.xyinc.exception.CantDeleteException;
+import br.com.ronistone.xyinc.model.Attributes;
+import br.com.ronistone.xyinc.exception.InstanceNotFound;
 import br.com.ronistone.xyinc.exception.ValidationAttributeException;
 import br.com.ronistone.xyinc.model.AttributesTypes;
 import br.com.ronistone.xyinc.model.ObjectInstance;
@@ -9,139 +10,113 @@ import br.com.ronistone.xyinc.model.builder.ObjectInstanceBuilder;
 import br.com.ronistone.xyinc.repository.ObjectInstanceRepository;
 import br.com.ronistone.xyinc.service.ObjectInstanceService;
 import br.com.ronistone.xyinc.service.SchemaService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ObjectInstanceServiceImpl implements ObjectInstanceService {
 
-    private final ObjectInstanceRepository repository;
+    private final ObjectInstanceRepository objectInstanceRepository;
     private final SchemaService schemaService;
 
-    public ObjectInstanceServiceImpl(ObjectInstanceRepository repository, SchemaService schemaService) {
-        this.repository = repository;
+    @Autowired
+    public ObjectInstanceServiceImpl(ObjectInstanceRepository objectInstanceRepository, SchemaService schemaService) {
+        this.objectInstanceRepository = objectInstanceRepository;
         this.schemaService = schemaService;
     }
 
 
     @Override
-    public Optional<Map<String, Object>> create(String schemaName, Map<String,Object> instanceAttributes) {
-        var schema = schemaService.findByName(schemaName);
+    public Optional<ObjectInstance> createObjectInstance(String schemaName, ObjectInstance newObjectInstance) {
+        Optional<Schema> schema = schemaService.findByName(schemaName);
 
-        if(schema.isPresent()) {
-            validateSchema(schema.get(), instanceAttributes);
-            ObjectInstance objectInstance = ObjectInstanceBuilder.create()
-                    .schema(schemaName)
-                    .attributes(instanceAttributes)
-                    .build();
-            return getInstanceAttributesOptional(repository.save(objectInstance));
-        }
+        return schema.flatMap(value -> createNewObjectInstance(value, newObjectInstance));
 
-        return Optional.empty();
     }
 
     @Override
-    public Optional<Map<String, Object>> updateById(String schemaName, String id, Map<String,Object>  instanceAttributes) {
+    public Optional<ObjectInstance> updateById(String schemaName, String id, ObjectInstance  instanceAttributes) {
 
-        var oldObjectInstance = repository.findBySchemaAndId(schemaName, id);
-        var schema = schemaService.findByName(schemaName);
+        Optional<ObjectInstance> oldObjectInstance = objectInstanceRepository.findBySchemaAndId(schemaName, id);
+        Optional<Schema> schema = schemaService.findByName(schemaName);
 
         if(oldObjectInstance.isPresent() && schema.isPresent()) {
-            validateSchema(schema.get(), instanceAttributes);
-            ObjectInstance objectInstance = ObjectInstanceBuilder.create()
-                    .schema(schemaName)
-                    .id(oldObjectInstance.get().getId())
-                    .attributes(instanceAttributes)
-                    .build();
-            return getInstanceAttributesOptional(repository.save(objectInstance));
+            return validateAndSaveObjectInstance(schema.get(), instanceAttributes, oldObjectInstance.get().getId());
         }
 
         return Optional.empty();
     }
 
-    @Override
-    public Optional<List<Map<String, Object>>> findAll(String schemaName) {
-        var response = repository.findBySchema(schemaName);
+    private Optional<ObjectInstance> createNewObjectInstance(Schema schema, ObjectInstance newObjectInstance) {
+        return validateAndSaveObjectInstance(schema, newObjectInstance, null);
+    }
 
-        if(response.isPresent() && !CollectionUtils.isEmpty(response.get())) {
-            return response.map(instances -> instances
-                    .stream()
-                    .map(this::getInstanceAttributes)
-                    .collect(Collectors.toList())
-            );
-        }
-        return Optional.empty();
+    private Optional<ObjectInstance> validateAndSaveObjectInstance(Schema schema, ObjectInstance newInstanceObject, String oldId) {
+        validateSchema(schema, newInstanceObject.getAttributes());
+
+        ObjectInstance objectInstance = ObjectInstanceBuilder.create()
+                .withSchema(schema.getName())
+                .withId(oldId)
+                .withAttributes(newInstanceObject.getAttributes())
+                .build();
+
+        return Optional.of(objectInstanceRepository.save(objectInstance));
+    }
+
+    @Override
+    public Optional<List<ObjectInstance>> findAllInstances(String schemaName) {
+
+        return objectInstanceRepository.findBySchema(schemaName);
 
     }
 
     @Override
-    public Optional<Map<String, Object>> findById(String schemaName, String id) {
-        return getInstanceAttributesOptional(repository.findBySchemaAndId(schemaName, id));
+    public Optional<ObjectInstance> findById(String schemaName, String id) {
+        return objectInstanceRepository.findBySchemaAndId(schemaName, id);
     }
 
     @Override
     public void deleteById(String schemaName, String id) {
-        var oldObjectInstance = repository.findBySchemaAndId(schemaName, id);
+        Optional<ObjectInstance> objectInstance = objectInstanceRepository.findBySchemaAndId(schemaName, id);
 
-        if(oldObjectInstance.isPresent()) {
-            repository.deleteBySchemaAndId(schemaName, id);
+        if(objectInstance.isPresent()) {
+            objectInstanceRepository.deleteBySchemaAndId(schemaName, id);
         } else {
-            throw new CantDeleteException(schemaName + " with " + id + " not found" );
+            throw new InstanceNotFound(schemaName + " with " + id + " not found" );
         }
     }
 
-
-
-    private Optional<Map<String, Object>> getInstanceAttributesOptional(ObjectInstance objectInstance) {
-        return Optional.ofNullable(getInstanceAttributes(objectInstance));
-    }
-
-    private Optional<Map<String, Object>> getInstanceAttributesOptional(Optional<ObjectInstance> objectInstance) {
-        if(objectInstance.isPresent()){
-            return getInstanceAttributesOptional(objectInstance.get());
-        }
-        return Optional.empty();
-    }
-
-    private Map<String, Object> getInstanceAttributes(ObjectInstance objectInstance) {
-        if(objectInstance != null) {
-            Map attributes = objectInstance.getAttributes();
-            if(attributes == null){
-                attributes = new HashMap<>();
-            }
-            attributes.put("id", objectInstance.getId());
-            return attributes;
-        }
-        return null;
-    }
-
-    private void validateSchema(Schema schema, Map<String, Object> attributes) {
-        Map schemaAttributes = schema.getAttributes();
+    private void validateSchema(Schema schema, Attributes attributes) {
+        Attributes schemaAttributes = schema.getAttributes();
 
         attributes.entrySet()
-                .forEach(
-                        entry -> validateAttribute(schemaAttributes, entry)
-                );
+                .forEach(entry -> validateAttribute(schemaAttributes, entry));
     }
-    private void validateAttribute(Map<String, String> schemaAttributes, Map.Entry<String, Object> entry) {
-        String type = schemaAttributes.get(entry.getKey());
+    private void validateAttribute(Attributes schemaAttributes, Map.Entry<String, Object> entry) {
+        String type = (String) schemaAttributes.get(entry.getKey());
         if(type != null) {
-            for(AttributesTypes typeSupported: AttributesTypes.values()){
-                if(type.toUpperCase().startsWith(typeSupported.name())) {
-                    validateTypeCorrect(entry, type, typeSupported);
-                    // TODO validar recursivamente lista e object...
-                    break;
-                }
-            }
+            validateTypes(entry, type);
         } else {
             throw new ValidationAttributeException("Attribute " + entry.getKey() + " does not exist");
         }
+    }
+
+    private void validateTypes(Map.Entry<String, Object> entry, String type) {
+        for(AttributesTypes typeSupported: AttributesTypes.values()){
+            if(isTypeSupported(type, typeSupported)) {
+                validateTypeCorrect(entry, type, typeSupported);
+                break;
+            }
+        }
+        // TODO validar recursivamente lista e object...
+    }
+
+    private boolean isTypeSupported(String type, AttributesTypes typeSupported) {
+        return type.toUpperCase().startsWith(typeSupported.name());
     }
 
     private void validateTypeCorrect(Map.Entry<String, Object> entry, String type, AttributesTypes typeSupported) {
@@ -150,7 +125,7 @@ public class ObjectInstanceServiceImpl implements ObjectInstanceService {
         }
     }
 
-    ObjectInstanceRepository getRepository() {
-        return repository;
+    ObjectInstanceRepository getObjectInstanceRepository() {
+        return objectInstanceRepository;
     }
 }

@@ -1,5 +1,6 @@
 package br.com.ronistone.xyinc.controller;
 
+import br.com.ronistone.xyinc.exception.InstanceNotFound;
 import br.com.ronistone.xyinc.exception.ValidationAttributeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,8 +16,14 @@ public class ErrorHandlerController {
     private static Logger logger = LogManager.getLogger(ErrorHandlerController.class);
 
     @ExceptionHandler(ValidationAttributeException.class)
-    protected ResponseEntity<Object> handleExceptionInternal(Exception ex) {
+    public ResponseEntity handleExceptionInternal(Exception ex) {
         logger.warn("Bad Request", ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(InstanceNotFound.class)
+    public ResponseEntity handleDeleteException(Exception e) {
+        logger.warn("Fail on delete operation", e);
+        return ResponseEntity.notFound().build();
     }
 }

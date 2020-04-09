@@ -17,8 +17,12 @@ import java.util.Optional;
 @RequestMapping("/api/v1/schema")
 public class SchemaController {
 
+    private final SchemaService schemaService;
+
     @Autowired
-    private SchemaService schemaService;
+    public SchemaController(SchemaService schemaService) {
+        this.schemaService = schemaService;
+    }
 
     @GetMapping
     public ResponseEntity getAll(){

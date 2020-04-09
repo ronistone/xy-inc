@@ -1,5 +1,6 @@
 package br.com.ronistone.xyinc.service.impl;
 
+import br.com.ronistone.xyinc.model.Attributes;
 import br.com.ronistone.xyinc.model.ObjectInstance;
 import br.com.ronistone.xyinc.model.Schema;
 import br.com.ronistone.xyinc.model.builder.ObjectInstanceBuilder;
@@ -10,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -37,9 +37,9 @@ public class ObjectInstanceServiceImplTest {
 
         ObjectInstanceServiceImpl service = setupCreateCenario(Optional.of(createSchema()));
 
-        Optional result = service.create(SCHEMA_NAME, createAttributes());
+        Optional result = service.createObjectInstance(SCHEMA_NAME, createObjectInstance());
 
-        verify(service.getRepository(), times(1)).save(any(ObjectInstance.class));
+        verify(service.getObjectInstanceRepository(), times(1)).save(any(ObjectInstance.class));
         assertTrue("the instance must been created", result.isPresent());
     }
 
@@ -48,7 +48,7 @@ public class ObjectInstanceServiceImplTest {
         try {
             ObjectInstanceServiceImpl service = setupCreateCenario(Optional.of(createSchema()));
 
-            Optional result = service.create(SCHEMA_NAME, createBrokenAttributes());
+            Optional result = service.createObjectInstance(SCHEMA_NAME, createObjectInstance(createBrokenAttributes()));
 
             fail("Exception should be thrown");
         } catch (Exception e) {
@@ -60,9 +60,9 @@ public class ObjectInstanceServiceImplTest {
     void create_schemaNotFound_fail() {
         ObjectInstanceServiceImpl service = setupCreateCenario(Optional.empty());
 
-        Optional result = service.create(SCHEMA_NAME, createAttributes());
+        Optional result = service.createObjectInstance(SCHEMA_NAME, createObjectInstance());
 
-        verify(service.getRepository(), times(0)).save(any(ObjectInstance.class));
+        verify(service.getObjectInstanceRepository(), times(0)).save(any(ObjectInstance.class));
         assertFalse("the instance must not be created", result.isPresent());
     }
 
@@ -83,9 +83,9 @@ public class ObjectInstanceServiceImplTest {
 
         ObjectInstanceServiceImpl service = setupUpdateCenario(Optional.of(createObjectInstance()), Optional.of(createSchema()));
 
-        Optional result = service.updateById(SCHEMA_NAME, INSTANCE_ID, createAttributes());
+        Optional result = service.updateById(SCHEMA_NAME, INSTANCE_ID, createObjectInstance());
 
-        verify(service.getRepository(), times(1)).save(any(ObjectInstance.class));
+        verify(service.getObjectInstanceRepository(), times(1)).save(any(ObjectInstance.class));
         assertTrue("the instance must been created", result.isPresent());
     }
 
@@ -93,13 +93,13 @@ public class ObjectInstanceServiceImplTest {
     void update_schemaNotFound_fail() {
         ObjectInstanceServiceImpl service = setupUpdateCenario(Optional.empty(), Optional.empty());
 
-        Optional result = service.updateById(SCHEMA_NAME, INSTANCE_ID, createAttributes());
+        Optional result = service.updateById(SCHEMA_NAME, INSTANCE_ID, createObjectInstance());
 
-        verify(service.getRepository(), times(0)).save(any(ObjectInstance.class));
+        verify(service.getObjectInstanceRepository(), times(0)).save(any(ObjectInstance.class));
         assertFalse("the instance must not be created", result.isPresent());
     }
 
-    private ObjectInstanceServiceImpl setupUpdateCenario(Optional instanceReturn, Optional schema) {
+    private ObjectInstanceServiceImpl setupUpdateCenario(Optional instanceReturn, Optional withSchema) {
         ObjectInstanceRepository repository = mock( ObjectInstanceRepository.class );
         SchemaService schemaService = mock( SchemaService.class );
         ObjectInstanceServiceImpl service = new ObjectInstanceServiceImpl(repository, schemaService);
@@ -107,7 +107,7 @@ public class ObjectInstanceServiceImplTest {
         when(repository.findBySchemaAndId(eq(SCHEMA_NAME), eq(SCHEMA_ID))).thenReturn(
                 instanceReturn
         );
-        when(schemaService.findByName(eq(SCHEMA_NAME))).thenReturn(schema);
+        when(schemaService.findByName(eq(SCHEMA_NAME))).thenReturn(withSchema);
         when(repository.save(any(ObjectInstance.class))).thenReturn(createObjectInstance());
         return service;
     }
@@ -117,7 +117,7 @@ public class ObjectInstanceServiceImplTest {
 
         ObjectInstanceServiceImpl service = setupFindAllCenario(Optional.of(createInstanceList()));
 
-        Optional result = service.findAll(SCHEMA_NAME);
+        Optional result = service.findAllInstances(SCHEMA_NAME);
 
         assertTrue("the instance must been found", result.isPresent());
     }
@@ -126,7 +126,7 @@ public class ObjectInstanceServiceImplTest {
     void findAll_instancesNotFound_fail() {
         ObjectInstanceServiceImpl service = setupFindAllCenario(Optional.empty());
 
-        Optional result = service.findAll(SCHEMA_NAME);
+        Optional result = service.findAllInstances(SCHEMA_NAME);
 
         assertFalse("the instance must not be found", result.isPresent());
     }
@@ -148,7 +148,7 @@ public class ObjectInstanceServiceImplTest {
 
         service.deleteById(SCHEMA_NAME, INSTANCE_ID);
 
-        verify(service.getRepository(), times(1)).deleteBySchemaAndId(anyString(), anyString());
+        verify(service.getObjectInstanceRepository(), times(1)).deleteBySchemaAndId(anyString(), anyString());
     }
 
     @Test
@@ -181,44 +181,48 @@ public class ObjectInstanceServiceImplTest {
         return instances;
     }
 
-    private ObjectInstance createObjectInstance() {
+    private ObjectInstance createObjectInstance(){
+        return createObjectInstance(createAttributes());
+    }
+
+    private ObjectInstance createObjectInstance(Attributes attributes) {
         return ObjectInstanceBuilder.create()
-                .id(INSTANCE_ID)
-                .schema(SCHEMA_NAME)
-                .attributes(createAttributes())
+                .withId(INSTANCE_ID)
+                .withSchema(SCHEMA_NAME)
+                .withAttributes(attributes)
                 .build();
     }
 
-    private Map<String, Object> createAttributes() {
-        return new HashMap<>(){{
+    private Attributes createAttributes() {
+        return new Attributes(){{
             put("name", "XPTO OBJECT");
             put("value", 12.5);
-            put("attributes", new ArrayList<>());
+            put("withAttributes", new ArrayList<>());
             put("quantity", 10);
             put("description", "blablabla");
             put("XZ", new HashMap<>());
         }};
     }
 
-    private Map<String, Object> createBrokenAttributes() {
-        var attributes = createAttributes();
-        attributes.put("XZ", 1);
-        return attributes;
+    private Attributes createBrokenAttributes() {
+        Attributes withAttributes = createAttributes();
+        withAttributes.put("XZ", 1);
+        return withAttributes;
     }
 
     private Schema createSchema() {
-        Schema schema = new Schema();
-        schema.setId(SCHEMA_ID);
-        schema.setName(SCHEMA_NAME);
-        schema.setAttributes(createSchemaAttributes());
-        return schema;
+        Schema withSchema = new Schema();
+        withSchema.setId(SCHEMA_ID);
+        withSchema.setName(SCHEMA_NAME);
+        withSchema.setAttributes(createSchemaAttributes());
+        return withSchema;
     }
 
-    private Map<String, String> createSchemaAttributes() {
-        return new HashMap() {{
+    private Attributes createSchemaAttributes() {
+        return new Attributes() {{
             put("name", "STRING");
             put("value", "DOUBLE");
-            put("attributes", "LIST-STRING");
+            put("withAttributes", "LIST-STRING");
             put("quantity", "INTEGER");
             put("description", "TEXT");
             put("XZ", "OBJECT");

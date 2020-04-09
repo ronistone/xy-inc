@@ -12,8 +12,12 @@ import java.util.Optional;
 @Service
 public class SchemaServiceImpl implements SchemaService {
 
+    private final SchemaRepository schemaRepository;
+
     @Autowired
-    private SchemaRepository schemaRepository;
+    public SchemaServiceImpl(SchemaRepository schemaRepository) {
+        this.schemaRepository = schemaRepository;
+    }
 
     @Override
     public Optional<Schema> findById(String id) {
