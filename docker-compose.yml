@@ -1,0 +1,22 @@
+version: "3.0"
+services:
+  app:
+#    image: azul/zulu-openjdk-alpine:11
+    image: maven:3.6.3-jdk-11-slim # java oracle (usando apenas para diminuir o download de imagens docker)
+    volumes:
+      - ./:/c
+    entrypoint: [ "java", "-jar",  "/c/target/xy-inc-0.0.1-SNAPSHOT.jar", "--spring.data.mongodb.host=db"]
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+  db:
+    image: mongo:4.2.5
+
+  maven:
+    image: maven:3.6.3-jdk-11-slim
+    volumes:
+      - ./:/c
+      - ~/.m2:/root/.m2
+    working_dir: /c
+    entrypoint: [ "mvn", "clean", "package" ]
