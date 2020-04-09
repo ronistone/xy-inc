@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,10 +47,7 @@ public class ObjectInstanceController {
 
         Optional<List<ObjectInstance>> response = objectInstanceService.findAllInstances(resource);
 
-        if(response.isPresent()) {
-            return createResponse(objectInstancesToAttributesDTO(response));
-        }
-        return ResponseEntity.notFound().build();
+        return createResponse(objectInstancesToAttributesDTO(response));
     }
 
     @GetMapping("/{resource}/{id}")
@@ -86,14 +84,14 @@ public class ObjectInstanceController {
     }
 
     private List<Attributes> objectInstancesToAttributesDTO(Optional<List<ObjectInstance>> response) {
-        return response.get().stream()
+        return response.map(instances -> instances.stream()
                 .map(instance -> {
-                        Attributes attributes = instance.getAttributes();
-                        attributes.put("id", instance.getId());
-                        return attributes;
-                    }
+                            Attributes attributes = instance.getAttributes();
+                            attributes.put("id", instance.getId());
+                            return attributes;
+                        }
                 )
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())).orElseGet(ArrayList::new);
     }
 
     private ResponseEntity createResponse(Optional<ObjectInstance> response) {
