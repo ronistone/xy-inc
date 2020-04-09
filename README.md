@@ -30,6 +30,16 @@ Backend as a service
     - `docker-compose up app` para startar a aplicação
     - Para a instalação do docker recomendo seguir o processo neste [link](https://docs.docker.com/compose/install/)
     
+# Testes
+   Para testar há uma collection com requisições prontas na raiz do projeto no arquivo `xy-inc.postman_collection.json`,
+   - Comece criando  um schema com a request `Create Schema`
+   - Com o nome do schema (no payload padrão esta `Product`) use o `Create new Instance` para persistir um objecto
+   - Execute o `Get All Instances`
+   - Execute o `Get Instance By Id` utilizando o id do objeto criado
+   - Execute o `Update Instance Falha pelo tipo` para evidência a validação de tipo com base no schema definido
+   - Execute o `Update Instance`
+   - Execute o `Delete Instance`
+
 # Técnologias
   - Java 11
   - Maven 3.6.3

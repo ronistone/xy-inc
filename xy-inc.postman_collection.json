@@ -1,0 +1,153 @@
+{
+	"variables": [],
+	"info": {
+		"name": "xy-inc",
+		"_postman_id": "e0f350f8-cb99-2621-734e-9ed5876e488f",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get All Schema",
+			"request": {
+				"url": "localhost:8080/api/v1/schema",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Create Schema",
+			"request": {
+				"url": "localhost:8080/api/v1/schema",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Products\",\n\t\"attributes\":\n\t\t{ \n\t\t\t\"name\": \"String\",\n\t\t\t\"value\": \"double\"\n\t\t\t\n\t\t}\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Instances",
+			"request": {
+				"url": "localhost:8080/api/v1/Products/",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"attributes\": [\n\t\t{\"name\": \"name\", \"value\": \"Batata\"},\n\t\t{\"name\": \"value\", \"value\": \"1.99\"}\n\t]\n\t\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Create new Instance",
+			"request": {
+				"url": "localhost:8080/api/v1/Products/",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Banana\",\n\t\"value\": 1.9\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Get Instance By Id",
+			"request": {
+				"url": "localhost:8080/api/v1/Products/5e8eb1ec59d859438dbab2e1",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update Instance falha pelo tipo",
+			"request": {
+				"url": "localhost:8080/api/v1/Products/5e8eb1ec59d859438dbab2e1",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Banana\",\n\t\"value\": 22\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update Instance",
+			"request": {
+				"url": "localhost:8080/api/v1/Products/5e8eb1ec59d859438dbab2e1",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Banana\",\n\t\"value\": 22.0\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Instance",
+			"request": {
+				"url": "localhost:8080/api/v1/Products/5e8eb1ec59d859438dbab2e1",
+				"method": "DELETE",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
