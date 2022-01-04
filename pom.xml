@@ -16,7 +16,7 @@
 
     <properties>
         <java.version>11</java.version>
-        <log4j-api.version>2.13.1</log4j-api.version>
+        <log4j-api.version>2.17.1</log4j-api.version>
     </properties>
 
     <dependencies>
